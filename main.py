@@ -5,8 +5,8 @@ from machine import Pin
 from machine import WDT
 import clock
 
-MyNetwork = "Rassi Net3"
-MyPassword = "Holyshit"
+MyNetwork = "R*********"
+MyPassword = "H********t"
 esp_id = "esp77"
 onboard_led=Pin(2,Pin.OUT)
 
