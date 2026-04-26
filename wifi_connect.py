@@ -2,8 +2,8 @@
 # will keep trying to connect and check for wifi and internet if not it reconnect
 # USAGE:
 #        from wifi_connect import wifi_loop
-#        MyNetwork = "Rassi Net3"
-#        MyPassword = "Holyshit"
+#        MyNetwork = "R********"
+#        MyPassword = "H*******t"
 #
 #        while True:
 #           wifi_loop(MyNetwork, MyPassword)
