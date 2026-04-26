@@ -1,0 +1,239 @@
+#  MQTT Manager (ESP32 MicroPython)
+
+Non-blocking, auto-reconnecting MQTT manager for ESP32 using MicroPython.  
+Designed to work alongside a WiFi manager like `wifi_loop()`.
+
+---
+
+##  Features
+
+- Non-blocking MQTT loop  
+- Automatic reconnect  
+- Auto re-subscribe after reconnect  
+- Message callback system  
+- Keepalive (ping) handled internally  
+- Last Will (offline detection)  
+- Automatic "online" status publish  
+- Clean and reusable API  
+
+---
+
+##  Architecture
+
+Your system is split into 3 layers:
+
+```
+wifi_loop()   → WiFi connection manager  
+mqtt_loop()   → MQTT connection manager  
+main.py       → your application logic  
+```
+
+---
+
+##  Installation
+
+Copy `mqtt_manager.py` into your ESP32 filesystem.
+
+Make sure you also have:
+- `wifi_connect.py`
+- `umqtt.simple` (built into MicroPython)
+
+---
+
+## API Reference
+
+### 1. set_callback(function)
+
+Register function to handle incoming MQTT messages.
+
+```python
+def on_mqtt(topic, msg):
+    print(topic, msg)
+
+mqtt_manager.set_callback(on_mqtt)
+```
+
+- topic and msg are bytes  
+- use `.decode()` to convert to string  
+
+---
+
+### 2. subscribe(topic)
+
+Subscribe to a topic.
+
+```python
+mqtt_manager.subscribe("esp77/test")
+```
+
+- Can be called before or after connection  
+- Automatically re-subscribes after reconnect  
+
+---
+
+### 3. publish(topic, message, retain=False)
+
+Publish a message.
+
+```python
+mqtt_manager.publish("esp/notification", "hello")
+```
+
+With retain:
+
+```python
+mqtt_manager.publish("esp77/status", "online", retain=True)
+```
+
+- retain=True → broker stores last message  
+- returns True if sent, False if not connected  
+
+---
+
+### 4. set_last_will(topic, message, retain=False)
+
+Set Last Will (LWT).
+
+```python
+mqtt_manager.set_last_will("esp77/status", "offline", retain=True)
+```
+
+ Must be called before connection
+
+---
+
+### 5. mqtt_loop()
+
+Main MQTT handler (non-blocking).
+
+```python
+mqtt_manager.mqtt_loop()
+```
+
+Handles:
+- connection
+- reconnection
+- message reception
+- keepalive ping  
+
+ Must be called continuously inside main loop
+
+---
+
+### 6. is_connected()
+
+Check MQTT connection state.
+
+```python
+if mqtt_manager.is_connected():
+    print("MQTT connected")
+```
+
+---
+
+##  Minimal Example
+
+```python
+from wifi_connect import wifi_loop
+import mqtt_manager
+import time
+
+SSID = "YourWiFi"
+PASSWORD = "YourPassword"
+esp_id = "esp77"
+
+TOPIC = f"{esp_id}/test"
+STATUS = f"{esp_id}/status"
+
+def on_mqtt(topic, msg):
+    print("RX:", topic.decode(), msg.decode())
+
+mqtt_manager.set_callback(on_mqtt)
+mqtt_manager.set_last_will(STATUS, "offline", retain=True)
+mqtt_manager.subscribe(TOPIC)
+
+last_pub = time.time()
+
+while True:
+    wifi_loop(SSID, PASSWORD)
+    mqtt_manager.mqtt_loop()
+
+    if mqtt_manager.is_connected():
+        if time.time() - last_pub > 10:
+            mqtt_manager.publish(TOPIC, "hello from esp")
+            last_pub = time.time()
+
+    time.sleep_ms(100)
+```
+
+---
+
+## 🔁 Message Flow
+
+```
+Incoming MQTT message
+        ↓
+mqtt_loop()
+        ↓
+check_msg()
+        ↓
+CALLS → your callback function
+```
+
+---
+
+## 🟢 Device Status (LWT)
+
+If using set_last_will():
+
+| Event | Message |
+|------|--------|
+| ESP connects | "online" |
+| ESP crashes | "offline" |
+
+---
+
+## ⚠️ Notes
+
+- WiFi must be connected (wifi_loop)  
+- mqtt_loop must run continuously  
+- Callback is required to receive messages  
+- QoS > 0 is not supported (MicroPython limitation)  
+
+---
+
+##  Best Practices
+
+- Use dynamic topics:
+  ```python
+  f"{esp_id}/topic"
+  ```
+- Keep logic outside callback (use flags if needed)  
+- Use retain=True for status topics  
+- Keep main loop non-blocking  
+
+---
+
+## 🏁 Summary
+
+This module provides:
+
+- MQTT auto connection  
+- Auto reconnection  
+- Clean API  
+- Non-blocking behavior  
+- Online/offline detection  
+
+---
+
+## 🔧 Typical Loop
+
+```python
+while True:
+    wifi_loop(...)
+    mqtt_manager.mqtt_loop()
+    # your logic here
+```
+
+---
+
