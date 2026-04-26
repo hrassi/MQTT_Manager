@@ -30,10 +30,10 @@ esp_id = "esp77"
 # CONFIG (inside module → reusable everywhere)
 # ─────────────────────────────────────────────
 MQTT_CLIENT_ID = esp_id + "_client"
-MQTT_BROKER = "90b4626652fe44619a4ad5567ecb6480.s1.eu.hivemq.cloud"
+MQTT_BROKER = "90b46***********************hivemq.cloud"
 MQTT_PORT = 8883
 MQTT_USER = "sam02"
-MQTT_PASSWORD = "Holyshit67"
+MQTT_PASSWORD = "H***********"
 
 SSL = True
 SSL_PARAMS = {'server_hostname': MQTT_BROKER}
